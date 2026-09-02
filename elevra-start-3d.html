@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Elevra Digital — AI + Sales Growth</title>
+  <meta name="description" content="Elevra Digital builds connected sales systems using AI, automation, CRM and growth strategy." />
+  <meta name="theme-color" content="#07090d" />
+
+  <style>
+    :root{
+      --bg:#07090d;
+      --panel:#0d1118;
+      --panel-2:#0a0d12;
+      --text:#f6f8fb;
+      --muted:#9aa4b2;
+      --line:rgba(255,255,255,.10);
+      --accent:#7c5cff;
+      --accent-2:#35d7ff;
+      --shadow:0 24px 80px rgba(0,0,0,.38);
+      --radius:26px;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      min-height:100vh;
+      background:
+        radial-gradient(circle at 15% -10%, rgba(124,92,255,.18), transparent 32%),
+        radial-gradient(circle at 95% 12%, rgba(53,215,255,.10), transparent 26%),
+        var(--bg);
+      color:var(--text);
+      font-family:Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      -webkit-font-smoothing:antialiased;
+      overflow-x:hidden;
+    }
+
+    a{color:inherit;text-decoration:none}
+    button,a{-webkit-tap-highlight-color:transparent}
+    a:focus-visible{outline:2px solid var(--accent-2);outline-offset:3px}
+
+    /* ---------- 3D background (Three.js) ---------- */
+    #bg3d{
+      position:fixed;
+      inset:0;
+      z-index:0;
+      pointer-events:none;
+    }
+    #bg3d canvas{display:block;width:100%;height:100%}
+    /* soften the canvas so text stays readable */
+    #bg3d:after{
+      content:"";
+      position:absolute;inset:0;
+      background:
+        radial-gradient(ellipse at 50% 40%, transparent 30%, rgba(7,9,13,.55) 100%),
+        linear-gradient(180deg, rgba(7,9,13,.15), rgba(7,9,13,.6));
+    }
+
+    .shell{
+      position:relative;
+      z-index:1;
+      width:min(100%, 760px);
+      margin:0 auto;
+      padding:34px 18px 52px;
+      perspective:1200px;
+    }
+
+    .profile{
+      display:flex;
+      gap:16px;
+      align-items:center;
+      padding:8px 4px 28px;
+    }
+
+    /* ---------- 3D rotating "E" mark ---------- */
+    .mark{
+      width:74px;
+      height:74px;
+      flex:0 0 74px;
+      position:relative;
+      perspective:520px;
+    }
+    .mark-ring{
+      position:absolute;inset:0;
+      border-radius:50%;
+      background:linear-gradient(145deg,rgba(124,92,255,.25),rgba(53,215,255,.14));
+      border:1px solid rgba(255,255,255,.13);
+      box-shadow:0 0 0 5px rgba(124,92,255,.08), 0 16px 42px rgba(0,0,0,.42);
+    }
+    .mark-3d{
+      position:absolute;inset:0;
+      display:grid;place-items:center;
+      transform-style:preserve-3d;
+      animation:spinE 9s cubic-bezier(.45,.02,.55,.98) infinite;
+    }
+    .mark-3d span{
+      position:absolute;
+      font-weight:800;
+      letter-spacing:-.06em;
+      font-size:36px;
+      line-height:1;
+      transform-style:preserve-3d;
+      color:#2a2350;
+      user-select:none;
+    }
+    /* 8 extrusion layers; the front face carries the gradient */
+    .mark-3d span:nth-child(1){transform:translateZ(8px);
+      background:linear-gradient(135deg,#fff 15%,#bdb0ff 55%,#62e5ff);
+      -webkit-background-clip:text;background-clip:text;color:transparent}
+    .mark-3d span:nth-child(2){transform:translateZ(6px);color:#8f7dff}
+    .mark-3d span:nth-child(3){transform:translateZ(4px);color:#6d5ce0}
+    .mark-3d span:nth-child(4){transform:translateZ(2px);color:#5647b8}
+    .mark-3d span:nth-child(5){transform:translateZ(0px);color:#443793}
+    .mark-3d span:nth-child(6){transform:translateZ(-2px);color:#352b74}
+    .mark-3d span:nth-child(7){transform:translateZ(-4px);color:#292158}
+    .mark-3d span:nth-child(8){transform:translateZ(-6px);color:#1e1840}
+    .mark-3d span:nth-child(9){transform:translateZ(-8px);color:#15112c}
+
+    @keyframes spinE{
+      0%   {transform:rotateY(-28deg) rotateX(6deg)}
+      50%  {transform:rotateY(28deg)  rotateX(-6deg)}
+      100% {transform:rotateY(-28deg) rotateX(6deg)}
+    }
+
+    .profile h1{
+      margin:0;
+      font-size:26px;
+      line-height:1.05;
+      letter-spacing:-.035em;
+    }
+
+    .profile p{
+      margin:8px 0 0;
+      color:var(--muted);
+      font-size:16px;
+      line-height:1.42;
+    }
+
+    .profile strong{
+      color:#d9d3ff;
+      font-weight:650;
+    }
+
+    /* ---------- tilt surfaces (hero + cards) ---------- */
+    .tilt{
+      transform-style:preserve-3d;
+      transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateZ(0);
+      transition:transform .35s cubic-bezier(.2,.8,.2,1), border-color .22s ease, background .22s ease;
+      will-change:transform;
+    }
+    .tilt.is-active{transition:transform .06s linear, border-color .22s ease, background .22s ease}
+    /* glare that follows the pointer */
+    .tilt .glare{
+      content:"";
+      position:absolute;inset:0;
+      border-radius:inherit;
+      pointer-events:none;
+      background:radial-gradient(circle at var(--gx,50%) var(--gy,50%), rgba(255,255,255,.14), transparent 45%);
+      opacity:var(--go,0);
+      transition:opacity .3s ease;
+      z-index:2;
+    }
+    /* lift inner content off the surface */
+    .tilt > :not(.glare){transform:translateZ(22px)}
+
+    .hero{
+      margin-bottom:18px;
+      padding:30px;
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:
+        linear-gradient(160deg, rgba(124,92,255,.13), transparent 34%),
+        linear-gradient(180deg,rgba(13,17,24,.86),rgba(10,13,18,.9));
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
+      backdrop-filter:blur(6px);
+      -webkit-backdrop-filter:blur(6px);
+    }
+
+    .hero:after{
+      content:"";
+      position:absolute;
+      width:240px;height:240px;
+      right:-110px;top:-125px;
+      border-radius:50%;
+      background:radial-gradient(circle,rgba(53,215,255,.15),transparent 68%);
+      pointer-events:none;
+    }
+
+    .eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:9px;
+      color:#b8abff;
+      font-size:12px;
+      letter-spacing:.19em;
+      font-weight:800;
+      text-transform:uppercase;
+    }
+
+    .eyebrow:before{
+      content:"";
+      width:8px;height:8px;border-radius:50%;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      box-shadow:0 0 20px rgba(124,92,255,.8);
+    }
+
+    .hero h2{
+      margin:16px 0 12px;
+      max-width:620px;
+      font-size:clamp(32px,7vw,52px);
+      line-height:.98;
+      letter-spacing:-.052em;
+    }
+
+    .hero .lead{
+      margin:0;
+      max-width:580px;
+      color:#b4bdc9;
+      font-size:17px;
+      line-height:1.58;
+    }
+
+    .trust{
+      display:flex;
+      flex-wrap:wrap;
+      gap:9px;
+      margin-top:22px;
+    }
+
+    .pill{
+      padding:8px 11px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      color:#c9d0da;
+      font-size:12px;
+      background:rgba(255,255,255,.025);
+    }
+
+    .cards{
+      display:grid;
+      gap:16px;
+    }
+
+    .card{
+      padding:26px;
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:
+        linear-gradient(150deg,rgba(255,255,255,.035),transparent 48%),
+        rgba(10,13,18,.9);
+      box-shadow:0 18px 55px rgba(0,0,0,.24);
+      position:relative;
+      overflow:hidden;
+      backdrop-filter:blur(6px);
+      -webkit-backdrop-filter:blur(6px);
+    }
+
+    .card.is-active,
+    .card:hover{
+      border-color:rgba(124,92,255,.34);
+      background:
+        linear-gradient(150deg,rgba(124,92,255,.08),transparent 48%),
+        rgba(10,13,18,.92);
+    }
+
+    .card .number{
+      color:#707b8b;
+      font-size:12px;
+      letter-spacing:.18em;
+      font-weight:800;
+      margin-bottom:18px;
+    }
+
+    .card h3{
+      margin:0 0 10px;
+      font-size:26px;
+      letter-spacing:-.035em;
+      line-height:1.08;
+    }
+
+    .card p{
+      margin:0;
+      max-width:590px;
+      color:var(--muted);
+      line-height:1.55;
+      font-size:15px;
+    }
+
+    .features{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:16px;
+    }
+
+    .features span{
+      padding:7px 9px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.075);
+      color:#b7c0cc;
+      font-size:11px;
+      background:rgba(255,255,255,.02);
+    }
+
+    .cta{
+      margin-top:22px;
+      min-height:54px;
+      width:100%;
+      border-radius:16px;
+      padding:0 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+      font-weight:800;
+      font-size:14px;
+      letter-spacing:.01em;
+      border:1px solid rgba(255,255,255,.08);
+      background:#f5f7fb;
+      color:#090b10;
+      transition:transform .18s ease,box-shadow .18s ease;
+      transform:translateZ(34px); /* CTA sits highest on the card */
+    }
+
+    .cta:hover{
+      transform:translateZ(34px) translateY(-1px);
+      box-shadow:0 12px 34px rgba(255,255,255,.10);
+    }
+
+    .cta.primary{
+      color:white;
+      border-color:transparent;
+      background:linear-gradient(110deg,var(--accent),#6952ef 52%,#2ebee5);
+      box-shadow:0 14px 36px rgba(124,92,255,.24);
+    }
+
+    .arrow{
+      font-size:21px;
+      line-height:1;
+      transition:transform .18s ease;
+    }
+
+    .cta:hover .arrow{transform:translateX(4px)}
+
+    .footer{
+      padding:32px 8px 0;
+      text-align:center;
+      color:#697485;
+      font-size:12px;
+      line-height:1.7;
+    }
+
+    .footer b{
+      color:#bfc7d2;
+      letter-spacing:.16em;
+      font-size:11px;
+    }
+
+    @media (max-width:540px){
+      .shell{padding-top:24px}
+      .profile{padding-bottom:22px}
+      .mark{width:64px;height:64px;flex-basis:64px}
+      .mark-3d span{font-size:31px}
+      .profile h1{font-size:22px}
+      .profile p{font-size:14px}
+      .hero,.card{padding:22px;border-radius:22px}
+      .hero .lead{font-size:15px}
+      .card h3{font-size:23px}
+    }
+
+    @media (prefers-reduced-motion:reduce){
+      *{scroll-behavior:auto!important;transition:none!important}
+      .mark-3d{animation:none;transform:rotateY(-18deg) rotateX(6deg)}
+      .tilt{transform:none!important}
+      .tilt .glare{display:none}
+      #bg3d{display:none}
+    }
+  </style>
+</head>
+
+<body>
+  <div id="bg3d" aria-hidden="true"></div>
+
+  <main class="shell">
+    <header class="profile">
+      <div class="mark" aria-label="Elevra Digital" role="img">
+        <div class="mark-ring"></div>
+        <div class="mark-3d">
+          <span>E</span><span>E</span><span>E</span><span>E</span><span>E</span><span>E</span><span>E</span><span>E</span><span>E</span>
+        </div>
+      </div>
+      <div>
+        <h1>Elevra Digital</h1>
+        <p><strong>AI + Sales Growth</strong> · We build connected systems that turn opportunities into revenue.</p>
+      </div>
+    </header>
+
+    <section class="hero tilt">
+      <div class="glare"></div>
+      <div>
+        <div class="eyebrow">AI IN PRACTICE · SALES BY DESIGN</div>
+        <h2>Find the bottleneck.<br>Build the system.<br>Grow revenue.</h2>
+        <p class="lead">
+          Elevra connects AI, automation, CRM and sales execution so your business can capture more opportunities, follow up faster and convert more consistently.
+        </p>
+
+        <div class="trust" aria-label="Elevra capabilities">
+          <span class="pill">AI</span>
+          <span class="pill">CRM</span>
+          <span class="pill">Automation</span>
+          <span class="pill">Sales</span>
+          <span class="pill">Growth</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="cards" aria-label="Elevra solutions">
+
+      <article class="card tilt">
+        <div class="glare"></div>
+        <div>
+          <div class="number">01 · AI SALES DIAGNOSTIC</div>
+          <h3>Discover where your company is losing revenue.</h3>
+          <p>
+            We review your sales operation, response speed, lead flow, CRM, follow-up and customer journey to identify the highest-impact opportunities for AI and automation.
+          </p>
+          <div class="features">
+            <span>Sales Process</span><span>Lead Flow</span><span>CRM</span><span>Follow-Up</span>
+          </div>
+          <!-- Replace the link below with your GHL / Calendly booking URL -->
+          <a class="cta primary" href="https://elevradigitall.com" target="_blank" rel="noopener">
+            GET MY AI DIAGNOSTIC <span class="arrow">→</span>
+          </a>
+        </div>
+      </article>
+
+      <article class="card tilt">
+        <div class="glare"></div>
+        <div>
+          <div class="number">02 · AI FRONTDESK</div>
+          <h3>Your business answers. Even when you don't.</h3>
+          <p>
+            AI Frontdesk answers calls 24/7, handles common questions, qualifies opportunities and helps book appointments directly into your workflow.
+          </p>
+          <div class="features">
+            <span>24/7 Answering</span><span>Qualification</span><span>Booking</span><span>CRM Integration</span>
+          </div>
+          <a class="cta" href="https://elevradigitall.com/ai-frontdesk" target="_blank" rel="noopener">
+            SEE AI FRONTDESK <span class="arrow">→</span>
+          </a>
+        </div>
+      </article>
+
+      <article class="card tilt">
+        <div class="glare"></div>
+        <div>
+          <div class="number">03 · AI + SALES IMPLEMENTATION</div>
+          <h3>We don't add tools. We connect the sales system.</h3>
+          <p>
+            CRM, automation, AI agents, sales workflows and growth infrastructure designed around the bottleneck that is costing your business opportunities.
+          </p>
+          <div class="features">
+            <span>Automation</span><span>AI Agents</span><span>Sales Systems</span><span>Growth</span>
+          </div>
+          <!-- Replace the link below with WhatsApp, GHL calendar, or your contact page -->
+          <a class="cta" href="https://elevradigitall.com" target="_blank" rel="noopener">
+            TALK TO ELEVRA <span class="arrow">→</span>
+          </a>
+        </div>
+      </article>
+
+    </section>
+
+    <footer class="footer">
+      <b>ELEVRA DIGITAL</b><br>
+      Strategy · Technology · Execution · Revenue
+    </footer>
+  </main>
+
+  <!-- Three.js (only used for the background; the page still works without it) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+  (function(){
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* =========================================================
+       1) Tilt cards — pointer (desktop) + touch (mobile)
+       ========================================================= */
+    if(!reduced){
+      var MAX = 7; // degrees
+      document.querySelectorAll('.tilt').forEach(function(el){
+        var rect;
+        function update(x,y){
+          rect = rect || el.getBoundingClientRect();
+          var px = (x - rect.left)/rect.width;   // 0..1
+          var py = (y - rect.top)/rect.height;   // 0..1
+          var ry = (px - .5) * MAX * 2;
+          var rx = (.5 - py) * MAX * 2;
+          el.style.setProperty('--rx', rx.toFixed(2)+'deg');
+          el.style.setProperty('--ry', ry.toFixed(2)+'deg');
+          el.style.setProperty('--gx', (px*100).toFixed(1)+'%');
+          el.style.setProperty('--gy', (py*100).toFixed(1)+'%');
+          el.style.setProperty('--go', 1);
+        }
+        function reset(){
+          rect = null;
+          el.classList.remove('is-active');
+          el.style.setProperty('--rx','0deg');
+          el.style.setProperty('--ry','0deg');
+          el.style.setProperty('--go',0);
+        }
+        el.addEventListener('pointerenter', function(){ el.classList.add('is-active'); rect = el.getBoundingClientRect(); });
+        el.addEventListener('pointermove', function(e){ if(e.pointerType==='mouse'||e.pointerType==='pen') update(e.clientX,e.clientY); });
+        el.addEventListener('pointerleave', reset);
+        // touch: tilt while finger is on the card, release on end
+        el.addEventListener('touchstart', function(e){ el.classList.add('is-active'); rect = el.getBoundingClientRect(); var t=e.touches[0]; update(t.clientX,t.clientY); }, {passive:true});
+        el.addEventListener('touchmove',  function(e){ var t=e.touches[0]; update(t.clientX,t.clientY); }, {passive:true});
+        el.addEventListener('touchend',   reset, {passive:true});
+        el.addEventListener('touchcancel',reset, {passive:true});
+      });
+    }
+
+    /* =========================================================
+       2) Three.js background — floating network of nodes
+       ========================================================= */
+    var mount = document.getElementById('bg3d');
+    if(reduced || !window.THREE || !mount) return;
+
+    var renderer;
+    try{
+      renderer = new THREE.WebGLRenderer({antialias:true, alpha:true, powerPreference:'low-power'});
+    }catch(e){ return; } // no WebGL → keep CSS gradients only
+
+    var isMobile = Math.min(window.innerWidth, window.innerHeight) < 600;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    mount.appendChild(renderer.domElement);
+
+    var scene  = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, .1, 100);
+    camera.position.z = 18;
+
+    var COUNT   = isMobile ? 110 : 190;
+    var SPREAD  = isMobile ? 16 : 24;
+    var LINKDST = isMobile ? 3.4 : 4.2;
+
+    var accent  = new THREE.Color(0x7c5cff);
+    var accent2 = new THREE.Color(0x35d7ff);
+
+    // --- nodes
+    var pos = new Float32Array(COUNT*3);
+    var col = new Float32Array(COUNT*3);
+    var vel = [];
+    for(var i=0;i<COUNT;i++){
+      pos[i*3]   = (Math.random()-.5)*SPREAD;
+      pos[i*3+1] = (Math.random()-.5)*SPREAD*1.3;
+      pos[i*3+2] = (Math.random()-.5)*SPREAD*.7;
+      var c = accent.clone().lerp(accent2, Math.random());
+      col[i*3]=c.r; col[i*3+1]=c.g; col[i*3+2]=c.b;
+      vel.push(new THREE.Vector3((Math.random()-.5)*.012,(Math.random()-.5)*.012,(Math.random()-.5)*.008));
+    }
+    var pgeo = new THREE.BufferGeometry();
+    pgeo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+    pgeo.setAttribute('color',    new THREE.BufferAttribute(col,3));
+    var pmat = new THREE.PointsMaterial({size: isMobile? .16 : .13, vertexColors:true, transparent:true, opacity:.85, sizeAttenuation:true, depthWrite:false, blending:THREE.AdditiveBlending});
+    var points = new THREE.Points(pgeo,pmat);
+    scene.add(points);
+
+    // --- links (rebuilt each frame; capped)
+    var MAXLINKS = COUNT*4;
+    var lpos = new Float32Array(MAXLINKS*2*3);
+    var lgeo = new THREE.BufferGeometry();
+    lgeo.setAttribute('position', new THREE.BufferAttribute(lpos,3));
+    var lmat = new THREE.LineBasicMaterial({color:0x8a78ff, transparent:true, opacity:.16, depthWrite:false, blending:THREE.AdditiveBlending});
+    var lines = new THREE.LineSegments(lgeo,lmat);
+    scene.add(lines);
+
+    // --- a slow wireframe icosahedron behind the hero
+    var ico = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(isMobile? 5.5 : 7.5, 1),
+      new THREE.MeshBasicMaterial({color:0x35d7ff, wireframe:true, transparent:true, opacity:.07})
+    );
+    ico.position.set(isMobile? 4 : 9, isMobile? 6 : 5, -6);
+    scene.add(ico);
+
+    // --- parallax from pointer / device tilt / scroll
+    var targetX=0, targetY=0, curX=0, curY=0, scrollY=0;
+    window.addEventListener('pointermove', function(e){
+      targetX = (e.clientX/window.innerWidth - .5);
+      targetY = (e.clientY/window.innerHeight - .5);
+    }, {passive:true});
+    window.addEventListener('deviceorientation', function(e){
+      if(e.gamma==null) return;
+      targetX = Math.max(-.5, Math.min(.5, e.gamma/60));
+      targetY = Math.max(-.5, Math.min(.5, (e.beta-45)/90));
+    }, {passive:true});
+    window.addEventListener('scroll', function(){ scrollY = window.scrollY; }, {passive:true});
+
+    function resize(){
+      var w = window.innerWidth, h = window.innerHeight;
+      renderer.setSize(w,h);
+      camera.aspect = w/h;
+      camera.updateProjectionMatrix();
+    }
+    window.addEventListener('resize', resize);
+
+    var running = true;
+    document.addEventListener('visibilitychange', function(){ running = !document.hidden; if(running) tick(); });
+
+    var half = SPREAD/2;
+    function tick(){
+      if(!running) return;
+      requestAnimationFrame(tick);
+
+      // move nodes + bounce
+      var p = pgeo.attributes.position.array;
+      for(var i=0;i<COUNT;i++){
+        var v = vel[i];
+        p[i*3]+=v.x; p[i*3+1]+=v.y; p[i*3+2]+=v.z;
+        if(p[i*3]  >  half   || p[i*3]  < -half)   v.x*=-1;
+        if(p[i*3+1]>  half*1.3|| p[i*3+1]< -half*1.3) v.y*=-1;
+        if(p[i*3+2]>  half*.7 || p[i*3+2]< -half*.7) v.z*=-1;
+      }
+      pgeo.attributes.position.needsUpdate = true;
+
+      // rebuild links
+      var n=0, d2 = LINKDST*LINKDST;
+      for(var a=0;a<COUNT && n<MAXLINKS;a++){
+        for(var b=a+1;b<COUNT && n<MAXLINKS;b++){
+          var dx=p[a*3]-p[b*3], dy=p[a*3+1]-p[b*3+1], dz=p[a*3+2]-p[b*3+2];
+          if(dx*dx+dy*dy+dz*dz < d2){
+            var o=n*6;
+            lpos[o]=p[a*3];   lpos[o+1]=p[a*3+1]; lpos[o+2]=p[a*3+2];
+            lpos[o+3]=p[b*3]; lpos[o+4]=p[b*3+1]; lpos[o+5]=p[b*3+2];
+            n++;
+          }
+        }
+      }
+      lgeo.setDrawRange(0, n*2);
+      lgeo.attributes.position.needsUpdate = true;
+
+      // parallax
+      curX += (targetX-curX)*.05;
+      curY += (targetY-curY)*.05;
+      var t = performance.now()*.0001;
+      points.rotation.y = curX*.35 + t*.4;
+      points.rotation.x = curY*.25 + Math.sin(t)*.1;
+      lines.rotation.copy(points.rotation);
+      ico.rotation.x = t*1.2; ico.rotation.y = t*.9;
+      camera.position.y = -scrollY*.004;
+
+      renderer.render(scene,camera);
+    }
+    tick();
+  })();
+  </script>
+</body>
+</html>
